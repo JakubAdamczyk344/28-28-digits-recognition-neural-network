@@ -6,12 +6,13 @@
 
 import numpy as np
 import mnistLoader
+import random
 
 class NeuralNetwork:
 
     numOfInputs = 784
     numOfOutputs = 10
-    numOfExamplesInBatch = 10
+    batchSize = 10
     numOfEpochs = 100
 
     def __init__(self, hiddenLayers):
@@ -29,3 +30,29 @@ class NeuralNetwork:
         output = inputs
         for x in range(len(self.weights)):
             output = self.sigmoid(np.dot(self.weights[x], output) + self.biases[x])
+        return output
+
+    def setMiniBatches(self, trainingData):
+        random.shuffle(trainingData)
+        self.miniBatches = [trainingData[k:k+self.batchSize] for k in range(0, len(trainingData), self.batchSize)]
+
+    def evaluateCost(self, miniBatchOutputs, miniBatchExpectedOutputs):
+        print("tu sie ma liczyć i returnowac koszt")
+
+    def updateNetwork(self, cost):
+        print("Tu trzeba updatować wagi i progi")
+
+    def processMiniBatch(self, miniBatch):
+        miniBatchOutputs = []
+        miniBatchExpectedOutputs = []
+        #data is each input/expected output pair from miniBatch
+        for data in miniBatch:
+            miniBatchOutputs += self.feedForward(data[0])
+            miniBatchExpectedOutputs += data[1]
+        self.updateNetwork(self.evaluateCost(miniBatchOutputs,miniBatchExpectedOutputs))
+        
+    def teachNetwork(self):
+        for epoch in self.numOfEpochs:
+            self.setMiniBatches(self.trainigData)
+            for miniBatch in self.miniBatches:
+                self.processMiniBatch(miniBatch)
