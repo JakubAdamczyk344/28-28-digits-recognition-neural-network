@@ -14,6 +14,7 @@ class NeuralNetwork:
     numOfOutputs = 10
     batchSize = 10
     numOfEpochs = 100
+    learningRate = 0.1
 
     def __init__(self, hiddenLayers):
 
