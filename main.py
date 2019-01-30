@@ -12,8 +12,8 @@ class NeuralNetwork:
 
     numOfInputs = 784
     numOfOutputs = 10
-    batchSize = 10
-    numOfEpochs = 100
+    batchSize = 5
+    numOfEpochs = 10
     learningRate = 0.1
 
     def __init__(self, hiddenLayers):
@@ -26,6 +26,9 @@ class NeuralNetwork:
 
     def sigmoid(self, x):
         return 1.0/(1.0 + np.exp(-x))
+
+    def sigmoidPrime(self, x):
+        return self.sigmoid(x)*(1-self.sigmoid(x))
 
     def feedForward(self, inputs):
         output = inputs
@@ -40,20 +43,61 @@ class NeuralNetwork:
     def evaluateCost(self, miniBatchOutputs, miniBatchExpectedOutputs):
         print("tu sie ma liczyć i returnowac koszt")
 
-    def updateNetwork(self, cost):
-        print("Tu trzeba updatować wagi i progi")
+    def backprop(self, inputData, expectedOutput):
+        """Return a tuple ``(nablaB, nablaW)`` representing the
+        gradient for the cost function C_x.  ``nablaB`` and
+        ``nablaW`` are layer-by-layer lists of numpy arrays, similar
+        to ``self.biases`` and ``self.weights``."""
+        nablaB = [np.zeros(b.shape) for b in self.biases]
+        nablaW = [np.zeros(w.shape) for w in self.weights]
+        # feedforward
+        activation = inputData
+        activations = [inputData] # list to store all the activations, layer by layer
+        zs = [] # list to store all the z vectors, layer by layer
+        for b, w in zip(self.biases, self.weights):
+            z = np.dot(w, activation)+b
+            zs.append(z)
+            activation = self.sigmoid(z)
+            activations.append(activation)
+        # backward pass
+        delta = self.cost_derivative(activations[-1], expectedOutput) * self.sigmoidPrime(zs[-1])
+        nablaB[-1] = delta
+        nablaW[-1] = np.dot(delta, activations[-2].transpose())
+        # Note that the variable l in the loop below is used a little
+        # differently to the notation in Chapter 2 of the book.  Here,
+        # l = 1 means the last layer of neurons, l = 2 is the
+        # second-last layer, and so on.  It's a renumbering of the
+        # scheme in the book, used here to take advantage of the fact
+        # that Python can use negative indices in lists.
+        for l in range(2, self.num_layers):
+            z = zs[-l]
+            sp = self.sigmoidPrime(z)
+            delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
+            nablaB[-l] = delta
+            nablaW[-l] = np.dot(delta, activations[-l-1].transpose())
+        return (nablaB, nablaW)
+
+    def updateMiniBatch(self, miniBatch):
+        nablaB = [np.zeros(b.shape) for b in self.biases]
+        nablaW = [np.zeros(w.shape) for w in self.weights]
+        for inputData, expectedOutput in miniBatch:
+            deltaNablaB, deltaNablaW = self.backprop(inputData, expectedOutput)
+            nablaB = [nb+dnb for nb, dnb in zip(nablaB, deltaNablaB)]
+            nablaW = [nw+dnw for nw, dnw in zip(nablaW, deltaNablaW)]
+        self.weights = [w-(self.learningRate/len(miniBatch))*nw
+                        for w, nw in zip(self.weights, nablaW)]
+        self.biases = [b-(self.learningRate/len(miniBatch))*nb
+                       for b, nb in zip(self.biases, nablaB)]
 
     def processMiniBatch(self, miniBatch):
-        miniBatchOutputs = []
-        miniBatchExpectedOutputs = []
-        #data is each input/expected output pair from miniBatch
-        for data in miniBatch:
-            miniBatchOutputs += self.feedForward(data[0])
-            miniBatchExpectedOutputs += data[1]
-        self.updateNetwork(self.evaluateCost(miniBatchOutputs,miniBatchExpectedOutputs))
+        self.updateMiniBatch(miniBatch)
+        #Tu moge wywolac feedforward żeby po updacie wag i progów policzył output i przyrownac to do oczekiwanego
         
     def teachNetwork(self):
         for epoch in self.numOfEpochs:
             self.setMiniBatches(self.trainigData)
             for miniBatch in self.miniBatches:
                 self.processMiniBatch(miniBatch)
+
+network = NeuralNetwork([6,6,6])
+network.teachNetwork()
