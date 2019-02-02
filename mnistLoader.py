@@ -68,11 +68,11 @@ def loadDataWrapper():
     trData, vaData, teData = loadData()
     trainingInputs = [np.reshape(x, (784, 1)) for x in trData[0]]
     trainingResults = [vectorizedResult(y) for y in trData[1]]
-    trainingData = zip(trainingInputs, trainingResults)
+    trainingData = list(zip(trainingInputs, trainingResults))
     validationInputs = [np.reshape(x, (784, 1)) for x in vaData[0]]
-    validationData = zip(validationInputs, vaData[1])
+    validationData = list(zip(validationInputs, vaData[1]))
     testInputs = [np.reshape(x, (784, 1)) for x in teData[0]]
-    testData = zip(testInputs, teData[1])
+    testData = list(zip(testInputs, teData[1]))
     return (trainingData, validationData, testData)
 
 def vectorizedResult(j):
