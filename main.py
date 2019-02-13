@@ -7,6 +7,7 @@
 import numpy as np
 import mnistLoader
 import random
+import matplotlib.pyplot as plt
 
 class NeuralNetwork:
 
@@ -103,16 +104,20 @@ class NeuralNetwork:
                         for w, nw in zip(self.weights, nablaW)]
         self.biases = [b-(self.learningRate/len(miniBatch))*nb
                        for b, nb in zip(self.biases, nablaB)]
-
-    def processMiniBatch(self, miniBatch):
-        self.updateMiniBatch(miniBatch)
-        print(self.evaluateCost(miniBatch))
         
     def teachNetwork(self):
+        numberOfBatch = []
+        batchError = []
+        batchNumber = 0
         for epoch in range(self.numOfEpochs):
             self.setMiniBatches(self.trainigData)
             for miniBatch in self.miniBatches:
-                self.processMiniBatch(miniBatch)
+                batchNumber += 1
+                numberOfBatch.append(batchNumber)
+                self.updateMiniBatch(miniBatch)
+                batchError.append(self.evaluateCost(miniBatch))
+        plt.plot(numberOfBatch,batchError)
+        plt.show()
 
 network = NeuralNetwork([6,6,6])
 network.teachNetwork()
