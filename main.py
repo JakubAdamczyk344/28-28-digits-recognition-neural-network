@@ -14,7 +14,7 @@ class NeuralNetwork:
     numOfInputs = 784
     numOfOutputs = 10
     batchSize = 10
-    numOfEpochs = 1
+    numOfEpochs = 5
     learningRate = 0.1
 
     def __init__(self, hiddenLayers):
@@ -22,8 +22,8 @@ class NeuralNetwork:
         self.trainigData, self.validationData, self.testData = mnistLoader.loadDataWrapper()
 
         #Initializing biases and weights for each neuron in hidden layers
-        self.biases = [np.random.rand(x, 1) for x in hiddenLayers] + [np.random.rand(self.numOfOutputs,1)]
-        self.weights = [np.random.rand(hiddenLayers[0],self.numOfInputs)] + [np.random.rand(x,y) for x,y in zip(hiddenLayers[1:],hiddenLayers[:-1])] + [np.random.rand(self.numOfOutputs,hiddenLayers[-1])]
+        self.biases = [np.random.randn(x, 1) for x in hiddenLayers] + [np.random.randn(self.numOfOutputs,1)]
+        self.weights = [np.random.randn(hiddenLayers[0],self.numOfInputs)] + [np.random.randn(x,y) for x,y in zip(hiddenLayers[1:],hiddenLayers[:-1])] + [np.random.randn(self.numOfOutputs,hiddenLayers[-1])]
 
     def sigmoid(self, x):
         return 1.0/(1.0 + np.exp(-x))
@@ -46,6 +46,12 @@ class NeuralNetwork:
         random.shuffle(trainingData)
         self.miniBatches = [trainingData[k:k+self.batchSize] for k in range(0, len(trainingData), self.batchSize)]
 
+    def testNetwork(self, testData):
+        """Neural network's output is assumed to be the index of whichever
+        neuron in the final layer has the highest activation."""
+        testResults = [(np.argmax(self.feedForward(inputData)), expectedOutput) for (inputData, expectedOutput) in testData]
+        return sum(int(inputData == expectedOutput) for (inputData, expectedOutput) in testResults)
+
     def evaluateCost(self, miniBatch):
         outputs = []
         expectedOutputs = []
@@ -56,7 +62,6 @@ class NeuralNetwork:
         sum = 0
         for output, expectedOutput in results:
             sum += np.power(np.linalg.norm(expectedOutput - output),2)
-            #sum += np.linalg.norm(expectedOutput - output)
         return sum/(2*self.batchSize)
 
     def backprop(self, inputData, expectedOutput):
@@ -108,7 +113,10 @@ class NeuralNetwork:
     def teachNetwork(self):
         numberOfBatch = []
         batchError = []
+        numberOfEpoch = []
+        percentOfCorrectAnswers = []
         batchNumber = 0
+        epochNumber = 0
         for epoch in range(self.numOfEpochs):
             self.setMiniBatches(self.trainigData)
             for miniBatch in self.miniBatches:
@@ -116,8 +124,25 @@ class NeuralNetwork:
                 numberOfBatch.append(batchNumber)
                 self.updateMiniBatch(miniBatch)
                 batchError.append(self.evaluateCost(miniBatch))
+            epochNumber += 1
+            numberOfEpoch.append(epochNumber)
+            percentOfCorrectAnswers.append(self.testNetwork(self.testData))
+        
+        fig1 = plt.figure(1) 
         plt.plot(numberOfBatch,batchError)
-        plt.show()
+        fig1.show()
+        fig2 = plt.figure(2)
+        plt.plot(numberOfEpoch,percentOfCorrectAnswers)
+        fig2.show()
+        input()
 
-network = NeuralNetwork([6,6,6])
-network.teachNetwork()
+
+network = NeuralNetwork([30])
+
+dane1 = network.testData[0][0]
+dane2 = network.testData[1][0]
+dane3 = network.testData[2][0]
+
+print(network.feedForward(dane1))
+print(network.feedForward(dane2))
+#print(network.feedForward(dane3))
