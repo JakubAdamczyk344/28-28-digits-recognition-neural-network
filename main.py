@@ -138,11 +138,4 @@ class NeuralNetwork:
 
 
 network = NeuralNetwork([30])
-
-dane1 = network.testData[0][0]
-dane2 = network.testData[1][0]
-dane3 = network.testData[2][0]
-
-print(network.feedForward(dane1))
-print(network.feedForward(dane2))
-#print(network.feedForward(dane3))
+network.teachNetwork()
