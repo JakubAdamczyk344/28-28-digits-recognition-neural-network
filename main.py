@@ -8,16 +8,20 @@ import numpy as np
 import mnistLoader
 import random
 import matplotlib.pyplot as plt
+import miscellaneous as misc
+import quadraticCost as qc
+import crossEntropyCost as cec
 
 class NeuralNetwork:
 
     numOfInputs = 784
     numOfOutputs = 10
     batchSize = 10
-    numOfEpochs = 5
+    numOfEpochs = 10
     learningRate = 0.1
 
-    def __init__(self, hiddenLayers):
+    def __init__(self, hiddenLayers, cost=cec):
+        self.cost = cost
         self.numberOfLayers = len(hiddenLayers) + 2
         self.trainigData, self.validationData, self.testData = mnistLoader.loadDataWrapper()
 
@@ -25,21 +29,10 @@ class NeuralNetwork:
         self.biases = [np.random.randn(x, 1) for x in hiddenLayers] + [np.random.randn(self.numOfOutputs,1)]
         self.weights = [np.random.randn(hiddenLayers[0],self.numOfInputs)] + [np.random.randn(x,y) for x,y in zip(hiddenLayers[1:],hiddenLayers[:-1])] + [np.random.randn(self.numOfOutputs,hiddenLayers[-1])]
 
-    def sigmoid(self, x):
-        return 1.0/(1.0 + np.exp(-x))
-
-    def sigmoidPrime(self, x):
-        return self.sigmoid(x)*(1-self.sigmoid(x))
-
-    def costDerivative(self, outputActivations, y):
-        """Return the vector of partial derivatives \partial C_x /
-        \partial a for the output activations."""
-        return (outputActivations-y)
-
     def feedForward(self, inputs):
         output = inputs
         for x in range(len(self.weights)):
-            output = self.sigmoid(np.dot(self.weights[x], output) + self.biases[x])
+            output = misc.sigmoid(np.dot(self.weights[x], output) + self.biases[x])
         return output
 
     def setMiniBatches(self, trainingData):
@@ -61,8 +54,8 @@ class NeuralNetwork:
         results = zip(outputs,expectedOutputs)
         sum = 0
         for output, expectedOutput in results:
-            sum += np.power(np.linalg.norm(expectedOutput - output),2)
-        return sum/(2*self.batchSize)
+            sum += (self.cost).countCost(output,expectedOutput)
+        return sum
 
     def backprop(self, inputData, expectedOutput):
         """Return a tuple ``(nablaB, nablaW)`` representing the
@@ -78,10 +71,10 @@ class NeuralNetwork:
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation)+b
             zs.append(z)
-            activation = self.sigmoid(z)
+            activation = misc.sigmoid(z)
             activations.append(activation)
         # backward pass
-        delta = self.costDerivative(activations[-1], expectedOutput) * self.sigmoidPrime(zs[-1])
+        delta = (self.cost).countDelta(zs[-1], activations[-1], expectedOutput)
         nablaB[-1] = delta
         nablaW[-1] = np.dot(delta, activations[-2].transpose())
         # Note that the variable l in the loop below is used a little
@@ -92,7 +85,7 @@ class NeuralNetwork:
         # that Python can use negative indices in lists.
         for l in range(2, self.numberOfLayers):
             z = zs[-l]
-            sp = self.sigmoidPrime(z)
+            sp = misc.sigmoidPrime(z)
             delta = np.dot(self.weights[-l+1].transpose(), delta) * sp
             nablaB[-l] = delta
             nablaW[-l] = np.dot(delta, activations[-l-1].transpose())
@@ -137,5 +130,5 @@ class NeuralNetwork:
         input()
 
 
-network = NeuralNetwork([30])
+network = NeuralNetwork([30],cec)
 network.teachNetwork()
