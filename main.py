@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import miscellaneous as misc
 import quadraticCost as qc
 import crossEntropyCost as cec
+from miscellaneous import defaultWeightsInitializer as defInit
+from miscellaneous import squeezedWeightsInitializer as sqzInit
 
 class NeuralNetwork:
 
@@ -20,14 +22,14 @@ class NeuralNetwork:
     numOfEpochs = 10
     learningRate = 0.1
 
-    def __init__(self, hiddenLayers, cost=cec):
+    def __init__(self, hiddenLayers, cost=cec, weightsInit=sqzInit):
         self.cost = cost
         self.numberOfLayers = len(hiddenLayers) + 2
         self.trainigData, self.validationData, self.testData = mnistLoader.loadDataWrapper()
 
         #Initializing biases and weights for each neuron in hidden layers
         self.biases = [np.random.randn(x, 1) for x in hiddenLayers] + [np.random.randn(self.numOfOutputs,1)]
-        self.weights = [np.random.randn(hiddenLayers[0],self.numOfInputs)] + [np.random.randn(x,y) for x,y in zip(hiddenLayers[1:],hiddenLayers[:-1])] + [np.random.randn(self.numOfOutputs,hiddenLayers[-1])]
+        self.weights = weightsInit(hiddenLayers,self.numOfInputs,self.numOfOutputs)
 
     def feedForward(self, inputs):
         output = inputs
@@ -130,5 +132,5 @@ class NeuralNetwork:
         input()
 
 
-network = NeuralNetwork([30],cec)
+network = NeuralNetwork([30],cec,sqzInit)
 network.teachNetwork()
