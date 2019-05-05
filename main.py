@@ -22,10 +22,12 @@ class NeuralNetwork:
     numOfEpochs = 10
     learningRate = 0.1
 
-    def __init__(self, hiddenLayers, cost=cec, weightsInit=sqzInit):
+    def __init__(self, hiddenLayers, cost=cec, weightsInit=sqzInit, lmbda=0.0):
         self.cost = cost
         self.numberOfLayers = len(hiddenLayers) + 2
         self.trainigData, self.validationData, self.testData = mnistLoader.loadDataWrapper()
+        #Regularization factor
+        self.lmbda = lmbda
 
         #Initializing biases and weights for each neuron in hidden layers
         self.biases = [np.random.randn(x, 1) for x in hiddenLayers] + [np.random.randn(self.numOfOutputs,1)]
@@ -54,10 +56,11 @@ class NeuralNetwork:
             outputs.append(self.feedForward(inputData))
             expectedOutputs.append(expectedOutput)
         results = zip(outputs,expectedOutputs)
-        sum = 0
+        cost = 0
         for output, expectedOutput in results:
-            sum += (self.cost).countCost(output,expectedOutput)
-        return sum
+            cost += (self.cost).countCost(output,expectedOutput)
+        cost /= len(miniBatch)
+        return cost
 
     def backprop(self, inputData, expectedOutput):
         """Return a tuple ``(nablaB, nablaW)`` representing the
@@ -100,10 +103,10 @@ class NeuralNetwork:
             deltaNablaB, deltaNablaW = self.backprop(inputData, expectedOutput)
             nablaB = [nb+dnb for nb, dnb in zip(nablaB, deltaNablaB)]
             nablaW = [nw+dnw for nw, dnw in zip(nablaW, deltaNablaW)]
-        self.weights = [w-(self.learningRate/len(miniBatch))*nw
+        self.weights = [(1-self.learningRate*(self.lmbda/len(self.trainigData)))*w-(self.learningRate/len(miniBatch))*nw
                         for w, nw in zip(self.weights, nablaW)]
         self.biases = [b-(self.learningRate/len(miniBatch))*nb
-                       for b, nb in zip(self.biases, nablaB)]
+                        for b, nb in zip(self.biases, nablaB)]
         
     def teachNetwork(self):
         numberOfBatch = []
@@ -132,5 +135,5 @@ class NeuralNetwork:
         input()
 
 
-network = NeuralNetwork([30],cec,sqzInit)
+network = NeuralNetwork([30],cec,sqzInit,5)
 network.teachNetwork()
